@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"github.com/gohuffman/frequency"
 	"os"
 )
 
@@ -12,5 +13,5 @@ func main() {
 		panic(err)
 	}
 	buff := bufio.NewReader(file)
-	calculateFrequency(buff)
+	frequency.CalculateFrequency(buff)
 }

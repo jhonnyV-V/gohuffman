@@ -1,4 +1,4 @@
-package main
+package frequency
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ type FrequencyStruct struct {
 	Frequency int
 }
 
-func calculateFrequency(file *bufio.Reader) []FrequencyStruct {
+func CalculateFrequency(file *bufio.Reader) []FrequencyStruct {
 	var frequencies []FrequencyStruct
 	var freqmap map[byte]int = map[byte]int{}
 	for {
@@ -31,7 +31,7 @@ func calculateFrequency(file *bufio.Reader) []FrequencyStruct {
 	}
 
 	sort.Slice(frequencies, func(i, j int) bool {
-		return frequencies[i].Frequency > frequencies[j].Frequency
+		return frequencies[i].Frequency < frequencies[j].Frequency
 	})
 	return frequencies
 }

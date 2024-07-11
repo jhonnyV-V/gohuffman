@@ -1,4 +1,4 @@
-package main
+package frequency
 
 import (
 	"bufio"
@@ -19,12 +19,13 @@ func TestGetFrequency(t *testing.T) {
 	input := getTestFile("freq.txt")
 
 	tests := []FrequencyStruct{
-		{Char: 'a', Frequency: 3},
-		{Char: 'b', Frequency: 2},
 		{Char: 'c', Frequency: 1},
+		{Char: '\n', Frequency: 1},
+		{Char: 'b', Frequency: 2},
+		{Char: 'a', Frequency: 3},
 	}
 
-	result := calculateFrequency(input)
+	result := CalculateFrequency(input)
 
 	for i, expected := range tests {
 		actual := result[i]
@@ -37,4 +38,24 @@ func TestGetFrequency(t *testing.T) {
 		}
 	}
 
+}
+
+func TestWithBigFile(t *testing.T) {
+	input := getTestFile("../135-0.txt")
+
+	result := CalculateFrequency(input)
+
+	for _, actual := range result {
+		if actual.Char == 't' {
+			if actual.Frequency != 223000 {
+				t.Fatalf("got wrong frequency for char t: expected 223000 got %d\n", actual.Frequency)
+			}
+		}
+
+		if actual.Char == 'X' {
+			if actual.Frequency != 333 {
+				t.Fatalf("got wrong frequency for char X: expected 333 got %d\n", actual.Frequency)
+			}
+		}
+	}
 }
