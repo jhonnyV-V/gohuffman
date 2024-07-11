@@ -5,7 +5,11 @@ type PriorityQueue []Three
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool {
-	return pq[i].Freq() < pq[j].Freq()
+	less := pq[i].Freq() < pq[j].Freq()
+	if pq[i].Freq() == pq[j].Freq() {
+		return pq[i].Root.Char() > pq[j].Root.Char()
+	}
+	return less
 }
 
 func (pq PriorityQueue) Swap(i, j int) {

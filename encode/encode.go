@@ -84,28 +84,27 @@ func CreateThree(frequencies []frequency.FrequencyStruct) Three {
 	return result
 }
 
-func traverse(node ChildNode, table map[byte][]byte, path []byte) {
+func traverse(node ChildNode, table map[byte]byte, path byte) byte {
 	if node.IsLeaft() {
 		table[node.Char()] = path
-		return
+		return path + byte(1)
 	}
 	baseNode := node.(*BaseNode)
+	localPath := path
 	if baseNode.LeftNode != nil {
-		newPath := append(path, 0)
-		traverse(baseNode.LeftNode, table, newPath)
+		localPath = traverse(baseNode.LeftNode, table, path)
 	}
 
 	if baseNode.RigthNode != nil {
-		newPath := make([]byte, len(path))
-		copy(newPath, path)
-		newPath = append(newPath, 1)
-		traverse(baseNode.RigthNode, table, newPath)
+		localPath = traverse(baseNode.RigthNode, table, localPath)
 	}
+
+	return localPath
 }
 
-func CreateTable(three Three, size int) map[byte][]byte {
-	table := make(map[byte][]byte, size)
-	path := []byte{}
+func CreateTable(three Three, size int) map[byte]byte {
+	table := make(map[byte]byte, size)
+	path := byte(0)
 
 	root := three.Root
 

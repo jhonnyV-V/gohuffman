@@ -53,12 +53,12 @@ func TestCreateTable(t *testing.T) {
 	input := getTestFile("../frequency/freq.txt")
 	tests := []struct {
 		Char byte
-		Path []byte
+		Path byte
 	}{
-		{Char: 'c', Path: []byte{1, 1, 0}},
-		{Char: '\n', Path: []byte{1, 1, 1}},
-		{Char: 'b', Path: []byte{1, 0}},
-		{Char: 'a', Path: []byte{0}},
+		{Char: 'c', Path: byte(2)},
+		{Char: '\n', Path: byte(3)},
+		{Char: 'b', Path: byte(1)},
+		{Char: 'a', Path: byte(0)},
 	}
 
 	// []frequency.FrequencyStruct{
@@ -76,14 +76,8 @@ func TestCreateTable(t *testing.T) {
 
 	for _, expected := range tests {
 		path := table[expected.Char]
-		isExpected := true
-		for i, v := range expected.Path {
-			if v != path[i] {
-				isExpected = false
-			}
-		}
-		if !isExpected {
-			t.Logf("wrong path char %q want=%q got=%q", expected.Char, expected.Path, path)
+		if path != expected.Path {
+			t.Fatalf("wrong path char=%q want=%#v got=%#v", expected.Char, expected.Path, path)
 		}
 	}
 }
