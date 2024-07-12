@@ -2,6 +2,7 @@ package encode
 
 import (
 	"container/heap"
+	"fmt"
 
 	"github.com/gohuffman/frequency"
 )
@@ -84,27 +85,29 @@ func CreateThree(frequencies []frequency.FrequencyStruct) Three {
 	return result
 }
 
-func traverse(node ChildNode, table map[byte]int32, path int32) int32 {
+func traverse(node ChildNode, table map[byte]byte, path byte) {
 	if node.IsLeaft() {
+		fmt.Printf("char %q, path %04b\n", node.Char(), path)
 		table[node.Char()] = path
-		return path + int32(1)
+		return
 	}
 	baseNode := node.(*BaseNode)
-	localPath := path
 	if baseNode.LeftNode != nil {
-		localPath = traverse(baseNode.LeftNode, table, path)
+		fmt.Printf("go left prev path %0b\n", path)
+		fmt.Printf("go left new path %0b\n", path<<1)
+		traverse(baseNode.LeftNode, table, path<<1)
 	}
 
 	if baseNode.RigthNode != nil {
-		localPath = traverse(baseNode.RigthNode, table, localPath)
+		fmt.Printf("go rigth prev path %0b\n", path)
+		fmt.Printf("go rigth new path %0b\n", path<<1+1)
+		traverse(baseNode.RigthNode, table, path<<1+1)
 	}
-
-	return localPath
 }
 
-func CreateTable(three Three, size int) map[byte]int32 {
-	table := make(map[byte]int32, size)
-	path := int32(0)
+func CreateTable(three Three, size int) map[byte]byte {
+	table := make(map[byte]byte, size)
+	path := byte(0)
 
 	root := three.Root
 
@@ -112,3 +115,37 @@ func CreateTable(three Three, size int) map[byte]int32 {
 
 	return table
 }
+
+// func WriteToFile(table map[byte]uint32, mapSize int, w *bufio.Writer, r *bufio.Reader) {
+// 	size := uint32((mapSize * 5) + 4)
+// 	headerBytes := make([]byte, size)
+// 	//first bytes should be the size of the headers
+// 	//it should be a version if I was mantaining this
+// 	binary.LittleEndian.PutUint32(headerBytes, uint32(mapSize*5))
+// 	fmt.Println("header size", len(headerBytes))
+// 	fmt.Printf("header %#v\n", headerBytes)
+//
+// 	for char, path := range table {
+// 		headerBytes = append(headerBytes, char)
+// 		binary.LittleEndian.PutUint32(headerBytes[len(headerBytes)-1:], uint32(path))
+// 	}
+//
+// 	w.Write(headerBytes)
+// 	headerBytes = []byte{}
+//
+// 	for {
+// 		char, err := r.ReadByte()
+// 		if err != nil {
+// 			if err == io.EOF {
+// 				break
+// 			} else {
+// 				panic(err)
+// 			}
+// 		}
+// 		//do the thing
+// 		encoded := []byte{}
+// 		binary.LittleEndian.PutUint32(encoded, table[char])
+//
+// 		w.Write(encoded)
+// 	}
+// }

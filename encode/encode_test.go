@@ -53,12 +53,12 @@ func TestCreateTable(t *testing.T) {
 	input := getTestFile("../frequency/freq.txt")
 	tests := []struct {
 		Char byte
-		Path int32
+		Path byte
 	}{
-		{Char: 'c', Path: int32(2)},
-		{Char: '\n', Path: int32(3)},
-		{Char: 'b', Path: int32(1)},
-		{Char: 'a', Path: int32(0)},
+		{Char: 'c', Path: 0b110},
+		{Char: '\n', Path: 0b111},
+		{Char: 'b', Path: 0b10},
+		{Char: 'a', Path: 0b0},
 	}
 
 	// []frequency.FrequencyStruct{
