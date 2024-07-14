@@ -3,6 +3,7 @@ package encode
 import (
 	"bufio"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/gohuffman/frequency"
@@ -78,6 +79,45 @@ func TestCreateTable(t *testing.T) {
 		path := table[expected.Char]
 		if path != expected.Path {
 			t.Fatalf("wrong path char=%q want=%#v got=%#v", expected.Char, expected.Path, path)
+		}
+	}
+}
+
+func TestWriteThree(t *testing.T) {
+	input := getTestFile("../frequency/freq.txt")
+
+	// []frequency.FrequencyStruct{
+	// 	{Char: 'c', Frequency: 1},
+	// 	{Char: '\n', Frequency: 1},
+	// 	{Char: 'b', Frequency: 2},
+	// 	{Char: 'a', Frequency: 3},
+	// }
+
+	frequencies := frequency.CalculateFrequency(input)
+
+	three := CreateThree(frequencies)
+
+	table := CreateTable(three, len(frequencies))
+
+	fthree := new(strings.Builder)
+
+	threeBuff := bufio.NewWriter(fthree)
+
+	err := WriteThree(three, table, threeBuff)
+	if err != nil {
+		panic(err)
+	}
+
+	expected := []string{"'\\n':111", "0", "'c':110", "0", "'b':10", "0", "'a':0"}
+	actual := strings.Split(strings.TrimSpace(fthree.String()), " ")
+
+	if len(actual) != len(expected) {
+		t.Fatalf("wrong three len want=%d, got=%d\ngot=%+v\nwant=%+v\n", len(expected), len(actual), actual, expected)
+	}
+
+	for i := 0; i < len(expected); i++ {
+		if expected[i] != actual[i] {
+			t.Fatalf("wrong value want=%s got=%s", expected[i], actual[i])
 		}
 	}
 }

@@ -1,8 +1,10 @@
 package encode
 
 import (
+	"bufio"
 	"container/heap"
 	"fmt"
+	"slices"
 
 	"github.com/gohuffman/frequency"
 )
@@ -50,6 +52,18 @@ type Three struct {
 
 func (l Three) Freq() int {
 	return l.Root.Freq()
+}
+
+type PlainT struct {
+	Char byte
+	Path byte
+}
+
+func (pt PlainT) String() string {
+	if pt.Char == 0 {
+		return "0 "
+	}
+	return fmt.Sprintf("%q:%0b ", pt.Char, pt.Path)
 }
 
 func NewThree(a, b ChildNode) Three {
@@ -114,6 +128,41 @@ func CreateTable(three Three, size int) map[byte]byte {
 	traverse(root, table, path)
 
 	return table
+}
+
+func inorderTraversal(root ChildNode, table map[byte]byte) []PlainT {
+	if root == nil {
+		return []PlainT{{}}
+	}
+
+	if root.IsLeaft() {
+		return []PlainT{
+			{Char: root.Char(), Path: table[root.Char()]},
+		}
+	}
+	baseNode := root.(*BaseNode)
+
+	result := []PlainT{}
+	result = append(result, inorderTraversal(baseNode.LeftNode, table)...)
+	result = append(result, PlainT{})
+	result = append(result, inorderTraversal(baseNode.RigthNode, table)...)
+
+	return result
+}
+
+func WriteThree(three Three, table map[byte]byte, f *bufio.Writer) error {
+	data := inorderTraversal(three.Root, table)
+
+	slices.Reverse(data)
+	for _, val := range data {
+		fmt.Printf("%s", val.String())
+		_, err := f.WriteString(val.String())
+		if err != nil {
+			return err
+		}
+	}
+	f.Flush()
+	return nil
 }
 
 // func WriteToFile(table map[byte]uint32, mapSize int, w *bufio.Writer, r *bufio.Reader) {
