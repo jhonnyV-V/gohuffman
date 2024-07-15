@@ -39,7 +39,7 @@ func Traverse(node childNode, path byte) childNode {
 	}
 	baseNode := node.(*baseNodeStruct)
 
-	if path^0b1 == 1 {
+	if path&0b1 == 0b1 {
 		return baseNode.RigthNode
 	}
 
@@ -122,4 +122,46 @@ func BuildThree(buff *bufio.Reader) *baseNodeStruct {
 	}
 
 	return root
+}
+
+func DecodeFile(three childNode, r *bufio.Reader, w *bufio.Writer) {
+	var result []byte
+	var lastNode childNode = three
+
+	for {
+		packedByte, err := r.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			panic(err)
+		}
+
+		for packedByte > 0 {
+			if packedByte == 0 {
+				continue
+			}
+			//get the leftmost bit
+			path := packedByte >> 7
+
+			// Clear the MSB
+			packedByte &= 0b01111111
+			// Shift left
+			packedByte <<= 1
+			lastNode = Traverse(lastNode, path)
+			if lastNode.IsLeaft() {
+				result = append(result, lastNode.Char())
+				lastNode = three
+			}
+		}
+	}
+
+	_, err := w.Write(result)
+	if err != nil {
+		panic(result)
+	}
+	err = w.Flush()
+	if err != nil {
+		panic(err)
+	}
 }
