@@ -37,17 +37,17 @@ func TestCreateThree(t *testing.T) {
 
 	result = result.RigthNode.(*baseNodeStruct)
 
-	if result.LeftNode.Char() != 'c' {
-		t.Fatalf("wrong three, expected=c got=%c, Three %+v", result.LeftNode.Char(), result)
+	if result.LeftNode.Char() != '\n' {
+		t.Fatalf("wrong three, expected=\\n got=%c, Three %+v", result.LeftNode.Char(), result)
 	}
 
-	if result.RigthNode.Char() != '\n' {
-		t.Fatalf("wrong three, expected=\\n got=%c, Three %+v", result.LeftNode.Char(), result)
+	if result.RigthNode.Char() != 'c' {
+		t.Fatalf("wrong three, expected=c got=%c, Three %+v", result.LeftNode.Char(), result)
 	}
 }
 
 func TestDecodeFile(t *testing.T) {
-	rawThree := "c 0 \n 0 b 0 a "
+	rawThree := "\n 0 c 0 b 0 a "
 	buffThree := bufio.NewReader(strings.NewReader(rawThree))
 	three := BuildThree(buffThree)
 

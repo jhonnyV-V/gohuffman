@@ -90,13 +90,13 @@ func BuildThree(buff *bufio.Reader) *baseNodeStruct {
 		panic(err)
 	}
 
-	root.LeftNode = leaf{char: cha}
-
+	root.RigthNode = leaf{char: cha}
 	cha, err = readPair(buff)
+
 	if err != nil {
 		panic(err)
 	}
-	root.RigthNode = leaf{char: cha}
+	root.LeftNode = leaf{char: cha}
 
 	for {
 		r = root

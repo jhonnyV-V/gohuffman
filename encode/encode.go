@@ -155,8 +155,13 @@ func WriteThree(three threeStruct, table map[byte]pathStruct, f *bufio.Writer) e
 	data := inorderTraversal(three.Root, table)
 
 	slices.Reverse(data)
-	for _, val := range data {
-		_, err := f.WriteString(val.String())
+	size := len(data) - 1
+	for i, val := range data {
+		str := val.String()
+		if i == size {
+			str = str[:len(str)-1]
+		}
+		_, err := f.WriteString(str)
 		if err != nil {
 			return err
 		}
@@ -168,7 +173,9 @@ func WriteToFile(table map[byte]pathStruct, w *bufio.Writer, r *bufio.Reader) er
 	var path pathStruct
 	var b byte
 	var err error
+	mask := byte(0b11111110)
 	bits := 0
+
 	for {
 		char, err := r.ReadByte()
 		if err != nil {
@@ -181,7 +188,12 @@ func WriteToFile(table map[byte]pathStruct, w *bufio.Writer, r *bufio.Reader) er
 		path = table[char]
 
 		for i := 0; i < path.Bits; i++ {
-			b = (path.Byte << i) | b
+
+			//move to the left
+			b <<= 1
+			bit := (path.Byte >> (path.Bits - 1 - i)) & 1
+			b &= mask
+			b |= bit
 			bits++
 			if bits == 8 {
 				err = w.WriteByte(b)
@@ -196,6 +208,7 @@ func WriteToFile(table map[byte]pathStruct, w *bufio.Writer, r *bufio.Reader) er
 	}
 
 	if bits > 0 {
+		b <<= (8 - bits)
 		err = w.WriteByte(b)
 		if err != nil {
 			return nil
