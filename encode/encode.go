@@ -4,71 +4,77 @@ import (
 	"bufio"
 	"container/heap"
 	"fmt"
+	"io"
 	"slices"
 
 	"github.com/gohuffman/frequency"
 )
 
-type ChildNode interface {
+type childNode interface {
 	Char() byte
 	Freq() int
 	IsLeaft() bool
 }
 
-type Leaf struct {
+type leaf struct {
 	char byte
 	freq int
 }
 
-func (l Leaf) Char() byte {
+func (l leaf) Char() byte {
 	return l.char
 }
-func (l Leaf) Freq() int {
+func (l leaf) Freq() int {
 	return l.freq
 }
-func (l Leaf) IsLeaft() bool {
+func (l leaf) IsLeaft() bool {
 	return true
 }
 
-type BaseNode struct {
+type baseNodeStruct struct {
 	freq      int
-	LeftNode  ChildNode
-	RigthNode ChildNode
+	LeftNode  childNode
+	RigthNode childNode
 }
 
-func (l BaseNode) Char() byte {
+func (l baseNodeStruct) Char() byte {
 	return 0
 }
-func (l BaseNode) Freq() int {
+func (l baseNodeStruct) Freq() int {
 	return l.freq
 }
-func (l BaseNode) IsLeaft() bool {
+func (l baseNodeStruct) IsLeaft() bool {
 	return false
 }
 
-type Three struct {
-	Root ChildNode
+type threeStruct struct {
+	Root childNode
 }
 
-func (l Three) Freq() int {
+func (l threeStruct) Freq() int {
 	return l.Root.Freq()
 }
 
-type PlainT struct {
+type plainT struct {
 	Char byte
 	Path byte
 }
 
-func (pt PlainT) String() string {
+func (pt plainT) String() string {
 	if pt.Char == 0 {
 		return "0 "
 	}
-	return fmt.Sprintf("%q:%0b ", pt.Char, pt.Path)
+	return fmt.Sprintf("%c ", pt.Char)
 }
 
-func NewThree(a, b ChildNode) Three {
-	return Three{
-		Root: &BaseNode{
+type pathStruct struct {
+	Byte byte
+	Bits int
+}
+
+func NewThree(a, b childNode) threeStruct {
+	return threeStruct{
+		Root: &baseNodeStruct{
 			LeftNode:  a,
 			RigthNode: b,
 			freq:      a.Freq() + b.Freq(),
@@ -76,22 +82,22 @@ func NewThree(a, b ChildNode) Three {
 	}
 }
 
-func CreateThree(frequencies []frequency.FrequencyStruct) Three {
+func CreateThree(frequencies []frequency.FrequencyStruct) threeStruct {
 	pq := make(PriorityQueue, len(frequencies))
 	for i, v := range frequencies {
-		pq[i] = Three{
-			Root: Leaf{
+		pq[i] = threeStruct{
+			Root: leaf{
 				char: v.Char, freq: v.Frequency,
 			},
 		}
 	}
 	heap.Init(&pq)
 
-	var a, b, result Three
+	var a, b, result threeStruct
 
 	for pq.Len() > 1 {
-		a = heap.Pop(&pq).(Three)
-		b = heap.Pop(&pq).(Three)
+		a = heap.Pop(&pq).(threeStruct)
+		b = heap.Pop(&pq).(threeStruct)
 		result = NewThree(a.Root, b.Root)
 		heap.Push(&pq, result)
 	}
@@ -99,102 +105,101 @@ func CreateThree(frequencies []frequency.FrequencyStruct) Three {
 	return result
 }
 
-func traverse(node ChildNode, table map[byte]byte, path byte) {
+func traverse(node childNode, table map[byte]pathStruct, path byte, bits int) {
 	if node.IsLeaft() {
-		fmt.Printf("char %q, path %04b\n", node.Char(), path)
-		table[node.Char()] = path
+		table[node.Char()] = pathStruct{Byte: path, Bits: bits}
 		return
 	}
-	baseNode := node.(*BaseNode)
+	baseNode := node.(*baseNodeStruct)
 	if baseNode.LeftNode != nil {
-		fmt.Printf("go left prev path %0b\n", path)
-		fmt.Printf("go left new path %0b\n", path<<1)
-		traverse(baseNode.LeftNode, table, path<<1)
+		traverse(baseNode.LeftNode, table, path<<1, bits+1)
 	}
 
 	if baseNode.RigthNode != nil {
-		fmt.Printf("go rigth prev path %0b\n", path)
-		fmt.Printf("go rigth new path %0b\n", path<<1+1)
-		traverse(baseNode.RigthNode, table, path<<1+1)
+		traverse(baseNode.RigthNode, table, path<<1+1, bits+1)
 	}
 }
 
-func CreateTable(three Three, size int) map[byte]byte {
-	table := make(map[byte]byte, size)
+func CreateTable(three threeStruct, size int) map[byte]pathStruct {
+	table := make(map[byte]pathStruct, size)
 	path := byte(0)
 
 	root := three.Root
 
-	traverse(root, table, path)
+	traverse(root, table, path, 0)
 
 	return table
 }
 
-func inorderTraversal(root ChildNode, table map[byte]byte) []PlainT {
+func inorderTraversal(root childNode, table map[byte]pathStruct) []plainT {
 	if root == nil {
-		return []PlainT{{}}
+		return []plainT{{}}
 	}
 
 	if root.IsLeaft() {
-		return []PlainT{
-			{Char: root.Char(), Path: table[root.Char()]},
+		return []plainT{
+			{Char: root.Char(), Path: table[root.Char()].Byte},
 		}
 	}
-	baseNode := root.(*BaseNode)
+	baseNode := root.(*baseNodeStruct)
 
-	result := []PlainT{}
+	result := []plainT{}
 	result = append(result, inorderTraversal(baseNode.LeftNode, table)...)
-	result = append(result, PlainT{})
+	result = append(result, plainT{})
 	result = append(result, inorderTraversal(baseNode.RigthNode, table)...)
 
 	return result
 }
 
-func WriteThree(three Three, table map[byte]byte, f *bufio.Writer) error {
+func WriteThree(three threeStruct, table map[byte]pathStruct, f *bufio.Writer) error {
 	data := inorderTraversal(three.Root, table)
 
 	slices.Reverse(data)
 	for _, val := range data {
-		fmt.Printf("%s", val.String())
 		_, err := f.WriteString(val.String())
 		if err != nil {
 			return err
 		}
 	}
-	f.Flush()
-	return nil
+	return f.Flush()
 }
 
-// func WriteToFile(table map[byte]uint32, mapSize int, w *bufio.Writer, r *bufio.Reader) {
-// 	size := uint32((mapSize * 5) + 4)
-// 	headerBytes := make([]byte, size)
-// 	//first bytes should be the size of the headers
-// 	//it should be a version if I was mantaining this
-// 	binary.LittleEndian.PutUint32(headerBytes, uint32(mapSize*5))
-// 	fmt.Println("header size", len(headerBytes))
-// 	fmt.Printf("header %#v\n", headerBytes)
-//
-// 	for char, path := range table {
-// 		headerBytes = append(headerBytes, char)
-// 		binary.LittleEndian.PutUint32(headerBytes[len(headerBytes)-1:], uint32(path))
-// 	}
-//
-// 	w.Write(headerBytes)
-// 	headerBytes = []byte{}
-//
-// 	for {
-// 		char, err := r.ReadByte()
-// 		if err != nil {
-// 			if err == io.EOF {
-// 				break
-// 			} else {
-// 				panic(err)
-// 			}
-// 		}
-// 		//do the thing
-// 		encoded := []byte{}
-// 		binary.LittleEndian.PutUint32(encoded, table[char])
-//
-// 		w.Write(encoded)
-// 	}
-// }
+func WriteToFile(table map[byte]pathStruct, w *bufio.Writer, r *bufio.Reader) error {
+	var path pathStruct
+	var b byte
+	var err error
+	bits := 0
+	for {
+		char, err := r.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				panic(err)
+			}
+		}
+		path = table[char]
+
+		for i := 0; i < path.Bits; i++ {
+			b = (path.Byte << i) | b
+			bits++
+			if bits == 8 {
+				err = w.WriteByte(b)
+				if err != nil {
+					return nil
+				}
+
+				b = 0
+				bits = 0
+			}
+		}
+	}
+
+	if bits > 0 {
+		err = w.WriteByte(b)
+		if err != nil {
+			return nil
+		}
+	}
+	return w.Flush()
+}

@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	outfile, err := os.Open(outputfilename)
+	outfile, err := os.Create(outputfilename)
 	if err != nil {
 		panic(err)
 	}
@@ -47,6 +47,27 @@ func main() {
 		three := encode.CreateThree(freq)
 		table := encode.CreateTable(three, len(freq))
 		buff.Reset(file)
-		encode.WriteToFile(table, len(freq), outBuff, buff)
+
+		threeFile, err := os.Create("three-" + outputfilename)
+		if err != nil {
+			panic(err)
+		}
+		threeBuff := bufio.NewWriter(threeFile)
+
+		err = encode.WriteThree(three, table, threeBuff)
+		if err != nil {
+			panic(err)
+		}
+
+		file, err = os.Open(filename)
+		if err != nil {
+			panic(err)
+		}
+		buff = bufio.NewReader(file)
+
+		err = encode.WriteToFile(table, outBuff, buff)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
