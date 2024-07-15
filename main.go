@@ -5,14 +5,21 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/gohuffman/decode"
 	"github.com/gohuffman/encode"
 	"github.com/gohuffman/frequency"
 )
 
+func addPrefixToFilename(path string, prefix string) string {
+	dir := filepath.Dir(path)
+	base := filepath.Base(path)
+	newBase := prefix + base
+	return filepath.Join(dir, newBase)
+}
+
 func main() {
-	outputfilename := ""
-	flag.StringVar(&outputfilename, "output", "output.txt", "-output filename")
 	flag.Parse()
 
 	command := flag.Arg(0)
@@ -27,6 +34,13 @@ func main() {
 		fmt.Println("No Filename")
 		os.Exit(0)
 	}
+
+	outputfilename := flag.Arg(2)
+	if outputfilename == "" {
+		fmt.Println("No Output File")
+		os.Exit(0)
+	}
+
 	file, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -48,7 +62,7 @@ func main() {
 		table := encode.CreateTable(three, len(freq))
 		buff.Reset(file)
 
-		threeFile, err := os.Create("three-" + outputfilename)
+		threeFile, err := os.Create(addPrefixToFilename(outputfilename, "three-"))
 		if err != nil {
 			panic(err)
 		}
@@ -69,5 +83,21 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+	case "decode":
+		threeFile, err := os.Open(addPrefixToFilename(filename, "three-"))
+		if err != nil {
+			panic(err)
+		}
+		threeBuff := bufio.NewReader(threeFile)
+		three := decode.BuildThree(threeBuff)
+
+		file, err = os.Open(filename)
+		if err != nil {
+			panic(err)
+		}
+		buff = bufio.NewReader(file)
+
+		decode.DecodeFile(three, buff, outBuff)
 	}
 }
